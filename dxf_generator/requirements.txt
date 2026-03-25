@@ -1,0 +1,24 @@
+# ── Core ──────────────────────────────────────────────────────────────────────
+flask>=2.3.0
+flask-cors>=4.0.0
+boto3>=1.26.0
+ezdxf>=1.1.0
+shapely>=2.0.0
+scipy>=1.11.0
+numpy>=1.24.0
+opencv-python-headless>=4.8.0
+Pillow>=10.0.0
+requests>=2.31.0
+
+# ── Gradio ────────────────────────────────────────────────────────────────────
+# gradio is installed automatically by HF Spaces — do not pin it here
+
+# ── Detection: YOLOv8m ────────────────────────────────────────────────────────
+ultralytics>=8.2.0
+
+# ── Segmentation: SAM only ────────────────────────────────────────────────────
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.40.0
+huggingface_hub>=0.20.0
+accelerate>=0.27.0
