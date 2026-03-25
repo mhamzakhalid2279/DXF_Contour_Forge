@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DXF Canvas Composer API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .status-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .status-running {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status-checking {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-item label {
+            display: block;
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .info-item .value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .test-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .response-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .response-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .response-content {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .link-output {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0fdf4;
+            border: 2px solid #10b981;
+            border-radius: 8px;
+        }
+
+        .link-output a {
+            color: #059669;
+            font-weight: 600;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .link-output a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 DXF Canvas Composer API</h1>
+            <p>Industrial-scale tool layout composition system with AWS S3 integration</p>
+        </div>
+
+        <div class="status-card">
+            <div class="status-indicator status-checking" id="statusIndicator">
+                <span class="pulse"></span>
+                <span id="statusText">Checking API Status...</span>
+            </div>
+
+            <div class="info-grid" id="infoGrid">
+                <div class="info-item">
+                    <label>S3 Available</label>
+                    <div class="value" id="s3Status">-</div>
+                </div>
+                <div class="info-item">
+                    <label>AWS Region</label>
+                    <div class="value" id="awsRegion">-</div>
+                </div>
+                <div class="info-item">
+                    <label>S3 Bucket</label>
+                    <div class="value" id="s3Bucket">-</div>
+                </div>
+                <div class="info-item">
+                    <label>Cache Directory</label>
+                    <div class="value" id="cacheDir">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test API Request</h2>
+            <textarea id="requestJson" placeholder="Enter JSON request data...">
+{
+  "canvas_information": {
+    "width_inches": 21,
+    "height_inches": 11,
+    "thickness_inches": 0.5,
+    "has_overlaps": false
+  },
+  "layout_metadata": {
+    "layout_name": "Test_Layout",
+    "brand": "Makita",
+    "container_type": "Drawer"
+  },
+  "tools": [
+    {
+      "tool_id": "tool-001",
+      "name": "Wrench",
+      "brand": "Makita",
+      "dxf_link": "https://axionbucketmlb.s3.eu-north-1.amazonaws.com/sample.dxf",
+      "position_inches": {"x": 2, "y": 1},
+      "rotation_degrees": 0,
+      "height_diagonal_inches": 8.5,
+      "thickness_inches": 0.5,
+      "flip_horizontal": false,
+      "flip_vertical": false,
+      "opacity": 100,
+      "smooth": 0
+    }
+  ],
+  "upload_to_s3": true
+}
+            </textarea>
+
+            <div class="btn-group">
+                <button class="btn-primary" id="sendRequestBtn" onclick="sendRequest()">
+                    <span id="btnText">Send Request</span>
+                </button>
+                <button class="btn-secondary" onclick="formatJson()">Format JSON</button>
+                <button class="btn-secondary" onclick="clearResponse()">Clear Response</button>
+            </div>
+        </div>
+
+        <div class="response-section">
+            <h2>API Response</h2>
+            <div class="response-content" id="responseContent">No response yet. Send a request to see results.</div>
+            <div id="linkOutput" class="link-output" style="display: none;">
+                <strong>S3 Download Link:</strong><br>
+                <a id="s3Link" href="#" target="_blank"></a>
+            </div>
+        </div>
+
+        <div class="footer">
+            Powered by Hugging Face • AWS S3 • ezdxf
+        </div>
+    </div>
+
+    <script>
+        const API_ENDPOINT = '/api/compose'; // Adjust based on your API setup
+        const HEALTH_ENDPOINT = '/api/health';
+
+        // Check API health on load
+        async function checkHealth() {
+            try {
+                const response = await fetch(HEALTH_ENDPOINT);
+                const data = await response.json();
+                
+                const statusIndicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+                
+                if (data.status === 'healthy') {
+                    statusIndicator.className = 'status-indicator status-running';
+                    statusText.textContent = 'API Running';
+                } else {
+                    statusIndicator.className = 'status-indicator status-error';
+                    statusText.textContent = 'API Error';
+                }
+
+                document.getElementById('s3Status').textContent = data.s3_available ? 'Yes' : 'No';
+                document.getElementById('awsRegion').textContent = data.aws_region || '-';
+                document.getElementById('s3Bucket').textContent = data.s3_bucket || '-';
+                document.getElementById('cacheDir').textContent = data.cache_dir || '-';
+                
+            } catch (error) {
+                const statusIndicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+                statusIndicator.className = 'status-indicator status-error';
+                statusText.textContent = 'Connection Failed';
+                console.error('Health check failed:', error);
+            }
+        }
+
+        // Send API request
+        async function sendRequest() {
+            const btn = document.getElementById('sendRequestBtn');
+            const btnText = document.getElementById('btnText');
+            const responseContent = document.getElementById('responseContent');
+            const linkOutput = document.getElementById('linkOutput');
+            const requestJson = document.getElementById('requestJson').value;
+
+            // Validate JSON
+            let requestData;
+            try {
+                requestData = JSON.parse(requestJson);
+            } catch (error) {
+                responseContent.textContent = 'Error: Invalid JSON format\n\n' + error.message;
+                return;
+            }
+
+            // Disable button and show loading
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="loading"></span>Processing...';
+            responseContent.textContent = 'Sending request to API...\n\nPlease wait, this may take 10-30 seconds depending on the number of tools...';
+            linkOutput.style.display = 'none';
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+                
+                // Display response
+                responseContent.textContent = JSON.stringify(data, null, 2);
+
+                // Show S3 link if available
+                if (data.success && data.s3_url) {
+                    linkOutput.style.display = 'block';
+                    const s3Link = document.getElementById('s3Link');
+                    s3Link.href = data.s3_url;
+                    s3Link.textContent = data.s3_url;
+                }
+
+            } catch (error) {
+                responseContent.textContent = 'Error: Failed to connect to API\n\n' + error.message;
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Send Request';
+            }
+        }
+
+        // Format JSON
+        function formatJson() {
+            try {
+                const textarea = document.getElementById('requestJson');
+                const json = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(json, null, 2);
+            } catch (error) {
+                alert('Invalid JSON format');
+            }
+        }
+
+        // Clear response
+        function clearResponse() {
+            document.getElementById('responseContent').textContent = 'No response yet. Send a request to see results.';
+            document.getElementById('linkOutput').style.display = 'none';
+        }
+
+        // Check health every 30 seconds
+        checkHealth();
+        setInterval(checkHealth, 30000);
+    </script>
+</body>
+</html>
